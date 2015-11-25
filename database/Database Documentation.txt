@@ -1,0 +1,2 @@
+To insert sample data see the
+"insertDummyData" function in fetch.js (scripts/serving/fetch.js)
