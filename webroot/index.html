@@ -1,0 +1,190 @@
+<html>
+    <head>
+        <title>Radio Analytics</title>
+        <meta name="description" content="Analytics engine for Backwell School Radio">
+        
+        <link href="style.css" rel="stylesheet" type="text/css" />
+        <link href='https://fonts.googleapis.com/css?family=Raleway:400,500,600,700,800,900' rel='stylesheet' type='text/css'>
+        
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" ">
+        
+        <link rel="icon" href="icon.png" type="image/x-icon">
+        <link rel="shortcut icon" href="icon.png" type="image/x-icon">
+        
+        <link rel="apple-touch-icon" href="apple-touch-icon.png">
+        <link rel="apple-touch-icon-precomposed" href="apple-touch-icon.png">
+        
+        <meta name="mobile-web-app-capable" content="yes">
+        <link rel="manifest" href="androidmanifest.json">
+    </head>
+    <body>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.js"></script>
+        <script src="http://malsup.github.com/jquery.form.js"></script>
+        <script src="chart.min.js"></script>
+
+        <br />
+        <center>
+            
+            <div id="status"></div>
+            <form method="get" id="customDateSelection" action="http://192.168.1.88:8080/">
+
+                <input type="radio"    name="preset"            id="breakPreset"           onClick="toggleCustomSelectors()" value="break"><label for="breakPreset"><span></span>Breaktime</label><br>
+                <input type="radio"    name="preset"            id="lunchPreset"           onClick="toggleCustomSelectors()" value="lunch" checked="checked"><label for="lunchPreset"><span></span>Lunchtime</label><br>
+                <input type="radio"    name="preset"            id="dayPreset"             onClick="toggleCustomSelectors()" value="today"><label for="dayPreset"><span></span>Today</label><br>
+                <input type="radio"    name="preset"            id="weekPreset"            onClick="toggleCustomSelectors()" value="week"><label for="weekPreset"><span></span>This Week</label><br>
+                <input type="radio"    name="preset"            id="monthPreset"           onClick="toggleCustomSelectors()" value="month"><label for="monthPreset"><span></span>This Month</label><br>
+                <input type="radio"    name="preset"            id="yearPreset"            onClick="toggleCustomSelectors()" value="year"><label for="yearPreset"><span></span>This Year</label><br>
+                <input type="radio"    name="preset"            id="customSelectionEnable" onClick="toggleCustomSelectors()" value="custom"><label for="customSelectionEnable"><span></span>Custom Selection</label><br>
+                <input type="checkbox" name="compareToPrevious" id="compareToPreviousTick" onClick="toggleAmountSelector()"  value="yes"><label for="compareToPreviousTick"><span></span>Compare to Last Period</label><br><br>
+                <input type="number"   name="compareToPreviousAmount" id="compareToPreviousAmount"      value="1" width="1" style="display: none;" min=1 max=5>
+                <br />
+                <div id="customDataSelection" style="display:none">
+                <br />
+                Select all data points between
+                <br /><input name="start" id="startinput" type="datetime-local" step="1" name="time" value="2000-01-01T00:00:00"></input>
+                <br />
+                <input name="stop" id="stopinput" type="datetime-local" step="1" name="time" value="2016-01-01T00:00:00"></input>
+                <br />
+                </div>
+                <br />
+                <input type="submit" value="Perform Data Request" class="pomegranate-flat-button"></input>
+                <br />
+                <br />
+            </form>
+
+            <div style="width: 60%">
+                <canvas id="canvas" height="450" width="600"></canvas>
+            </div>
+<!--
+			<section style="position: fixed; bottom: 0px; width: 100%;">
+				<p style="margin: 0 auto; width: 300px;">Blah blah</p>
+				
+			</section>-->
+			
+			<div id="footer">
+				<img src="lightIcon.png" width=64 width=64>
+			</div>
+        </center>
+
+        <script type="text/javascript">        
+            
+            
+            function displayError(message) {
+                message = "<div style='background-color: #e67e22; color: white'><br /><div style='font-weight: 900'>ERROR!</div><div style='font-weight: 500'><br />" + message + "</div><br /></div><br/>";
+                document.getElementById("status").innerHTML = message;
+            }
+            
+            
+            $.ajaxSetup({
+                error: function(jqXHR, exception) {
+                    if (jqXHR.status === 0) {
+                        displayError("Failed to connect to backend data fetching engine.")
+                    } else if (jqXHR.status == 404) {
+                        alert('Requested page not found. [404]');
+                    } else if (jqXHR.status == 500) {
+                        alert('Internal Server Error [500].');
+                    } else if (exception === 'parsererror') {
+                        alert('Requested JSON parse failed.');
+                    } else if (exception === 'timeout') {
+                        alert('Time out error.');
+                    } else if (exception === 'abort') {
+                        alert('Ajax request aborted.');
+                    } else {
+                        alert('Uncaught Error.\n' + jqXHR.responseText);
+                    }
+                }
+            });
+            
+            
+            function toggleAmountSelector() {
+                if (document.getElementById("compareToPreviousTick").checked) {
+                    document.getElementById("compareToPreviousAmount").style.display = 'block';
+                } else {
+                    document.getElementById("compareToPreviousAmount").style.display = 'none';
+                }
+            }
+
+            function toggleCustomSelectors() {
+                if (document.getElementById("customSelectionEnable").checked) {
+                    document.getElementById("customDataSelection").style.display = 'block';
+                    document.getElementById("compareToPreviousAmount").max = 10;
+                } else {
+                    document.getElementById("customDataSelection").style.display = 'none';
+
+                    // Reduce the previous period number selectors max value to 5
+                    document.getElementById("compareToPreviousAmount").max = 5;
+
+                    // And ensure its current value isn't higher than 5
+                    if (document.getElementById("compareToPreviousAmount").value > 5) {
+                        document.getElementById("compareToPreviousAmount").value = 5;
+                    }
+
+                }
+            }
+
+        </script>
+
+        <script>
+            function drawChart(data) {
+                if (data.labels.length > 80) {
+                    console.log("Too many data points were sent to be rendered.")
+                    displayError("Too many data points were sent to be rendered.</br />This would normally be caught earlier but for some reason it slipped<br />through so we stopped it at the last stage before it overloaded the graphing engine.")
+                } else {
+                    var ctx = document.getElementById("canvas").getContext("2d");
+                    window.myLine = new Chart(ctx).Line(data, {
+                        responsive: true, scaleFontColor: "#1A242E"
+                    });
+                }
+            }
+            
+            $(document).ready(function() { 
+
+                // bind 'myForm' and provide a simple callback function 
+                $('#customDateSelection').ajaxForm(function(returnedData) {
+                    returnedData = JSON.parse(returnedData)
+
+
+
+
+                    var formattedData = {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: "PRIMARY DATASET",
+                                fillColor: "rgba(52, 152, 219,0.2)",
+                                strokeColor: "rgba(41, 128, 185,1.0)",
+                                pointColor: "rgba(151,187,205,1)",
+                                pointStrokeColor: "#fff",
+                                pointHighlightFill: "#fff",
+                                pointHighlightStroke: "rgba(151,187,205,1)",
+                                data: []
+                            }
+                        ]
+                    };
+
+
+                    // X axis label dates
+                    var c = 0;
+                    while (c < returnedData.length) {
+                        formattedData.labels[formattedData.labels.length] = String(new Date(Date.parse(returnedData[c].datetime))).split(" GMT")[0];
+                        //console.log(new Date(Date.parse(returnedData[c].datetime)))
+                        c += 1;
+                    }
+
+                    // Y axis data
+                    var c = 0;
+                    while (c < returnedData.length) {
+                        formattedData.datasets[0].data[formattedData.datasets[0].data.length] = returnedData[c].count;
+
+                        c += 1;
+                    }
+
+                    drawChart(formattedData);
+
+                }); 
+            });
+
+
+        </script>
+    </body>
+</html>
