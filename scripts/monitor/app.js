@@ -12,10 +12,10 @@ console.log("Monitoring the listener count for the schoolradio icecast server");
 
 // Mysql connection settings
 var connection = mysql.createConnection({
-    host: "localhost",
-    user: "radiospy",
-    password: "radiolistenercounter1",
-    database: "schoolradio"
+	host: "localhost",
+	user: "myuser",
+	password: "mypass",
+	database: "icecastanalytics"
 });
 
 // Setup MySQL error handling

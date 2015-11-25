@@ -41,9 +41,9 @@ function createDummyData(numberOfEntries, clearPre) {
     // Mysql connection for dummy data inserting
     var connection = mysql.createConnection({
         host: "localhost",
-        user: "radiospy",
-        password: "radiolistenercounter1",
-        database: "schoolradio"
+        user: "myuser",
+        password: "mypass",
+        database: "icecastanalytics"
     });
 
     // Start the MySQL DB connection
@@ -79,9 +79,9 @@ function createDummyData(numberOfEntries, clearPre) {
 exports.keepAlive = function() {
     var connection = mysql.createConnection({
         host: "localhost",
-        user: "radiospy",
-        password: "radiolistenercounter1",
-        database: "schoolradio"
+        user: "myuser",
+        password: "mypass",
+        database: "icecastanalytics"
     });
 
     // Start the MySQL DB connection
